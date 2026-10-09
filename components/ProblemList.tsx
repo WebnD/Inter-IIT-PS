@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { type Problem, displayName, firstSentence } from "@/lib/data";
+import { type Problem, displayName, firstSentence, hasPdf } from "@/lib/data";
 import { PrepBadge } from "./PrepBadge";
 import { DomainLinks } from "./DomainLinks";
 
@@ -22,7 +22,7 @@ export function ProblemList({ items, showYear = true, showPrep = true, full = fa
                 {displayName(p)}
               </Link>
               {showPrep && <PrepBadge level={p.prepLevel} />}
-              {!p.pdfUrl && <span className="text-xs text-muted">No PDF</span>}
+              {!hasPdf(p) && <span className="text-xs text-muted">No PDF</span>}
             </div>
             <p className={`max-w-[72ch] ${p.summary ? "text-ink/85" : "italic text-muted"}`}>
               {p.summary ? (full ? p.summary : firstSentence(p.summary)) : "No details in the source archive yet."}

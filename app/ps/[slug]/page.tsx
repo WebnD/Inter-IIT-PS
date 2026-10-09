@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { problems, getProblem, getEdition, problemsBySponsor, similarProblems, displayName } from "@/lib/data";
+import { problems, getProblem, getEdition, problemsBySponsor, similarProblems, displayName, hasPdf, formatBytes } from "@/lib/data";
 import { PrepBadge } from "@/components/PrepBadge";
 import { DomainLinks } from "@/components/DomainLinks";
 import { ProblemList } from "@/components/ProblemList";
@@ -67,15 +67,22 @@ export default function ProblemPage({ params }: { params: { slug: string } }) {
         </div>
 
         <aside className="space-y-6">
-          {p.pdfUrl ? (
-            <a
-              href={p.pdfUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="block rounded-md bg-ink px-4 py-3 text-center font-medium text-paper hover:bg-ink/90"
-            >
-              Open the PS PDF
-            </a>
+          {hasPdf(p) ? (
+            <div className="space-y-2">
+              <Link
+                href={`/ps/${p.slug}/pdf`}
+                className="block rounded-md bg-ink px-4 py-3 text-center font-medium text-paper hover:bg-ink/90"
+              >
+                Read the PS PDF
+              </Link>
+              {p.pdfLocal ? (
+                <a href={p.pdfLocal.path} download={`${p.slug}.pdf`} className="block text-center text-sm underline underline-offset-4">
+                  Download{formatBytes(p.pdfLocal.bytes) ? ` (${formatBytes(p.pdfLocal.bytes)})` : ""}
+                </a>
+              ) : (
+                <p className="text-center text-xs text-muted">Loads from the source archive until the PDFs are synced.</p>
+              )}
+            </div>
           ) : (
             <p className="rounded-md border border-rule bg-surface px-4 py-3 text-sm text-muted">No PDF in the source archive.</p>
           )}

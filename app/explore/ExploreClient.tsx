@@ -71,7 +71,7 @@ export function ExploreClient({ problems, years, sponsors, domainCounts }: Props
       if (prepLevels.length && !prepLevels.includes(p.prepLevel)) return false;
       if (selDomains.length && !selDomains.some((d) => p.domains.includes(d))) return false;
       if (selSponsor && p.sponsorSlug !== selSponsor) return false;
-      if (pdfOnly && !p.pdfUrl) return false;
+      if (pdfOnly && !p.pdfLocal && !p.pdfUrl) return false;
       if (tokens.length) {
         const h = index.get(p.slug)!;
         if (!tokens.every((t) => h.includes(t))) return false;

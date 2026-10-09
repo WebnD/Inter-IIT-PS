@@ -1,6 +1,7 @@
 import problemsJson from "@/data/problems.json";
 import editionsJson from "@/data/editions.json";
 import enrichmentJson from "@/data/enrichment.json";
+import pdfManifestJson from "@/data/pdf-manifest.json";
 import { PREP_LEVELS, type PrepLevel } from "./taxonomy";
 
 export type Resource = { type: "dataset" | "paper" | "tutorial" | "repo" | "solution" | "other"; title: string; url: string; note?: string };
@@ -16,7 +17,10 @@ export type Problem = {
   domains: string[];
   rawDomains: string[];
   summary: string | null;
+  /** Link to the PDF in the source archive (fallback when there's no local copy). */
   pdfUrl: string | null;
+  /** Copy served by this portal from public/pdfs, if `npm run pdfs` has fetched it. */
+  pdfLocal: { path: string; bytes: number | null } | null;
   status: "complete" | "incomplete";
   notes?: string;
   resources: Resource[];
@@ -26,6 +30,7 @@ export type Edition = { year: number; number: string; host: string; theme: strin
 
 type Enrichment = Record<string, { notes?: string; pdfUrl?: string; summary?: string; resources?: Resource[] }>;
 const enrichment = enrichmentJson as Enrichment;
+const pdfManifest = pdfManifestJson as Record<string, { path: string; bytes: number }>;
 
 const prepRank = (p: PrepLevel) => PREP_LEVELS.indexOf(p);
 
@@ -33,10 +38,14 @@ export const problems: Problem[] = (problemsJson as Omit<Problem, "resources">[]
   .map((p) => {
     const extra = enrichment[p.slug] ?? {};
     const summary = extra.summary ?? p.summary;
+    // enrichment pdfUrl may be an external URL or a path to a file you put in public/
+    const extraIsLocal = extra.pdfUrl?.startsWith("/");
+    const pdfLocal = pdfManifest[p.slug] ?? (extraIsLocal ? { path: extra.pdfUrl!, bytes: null } : null);
     return {
       ...p,
       summary,
-      pdfUrl: extra.pdfUrl ?? p.pdfUrl,
+      pdfUrl: extra.pdfUrl && !extraIsLocal ? extra.pdfUrl : p.pdfUrl,
+      pdfLocal,
       status: summary ? "complete" : "incomplete",
       notes: extra.notes,
       resources: extra.resources ?? [],
@@ -45,6 +54,11 @@ export const problems: Problem[] = (problemsJson as Omit<Problem, "resources">[]
   .sort((a, b) => b.year - a.year || prepRank(a.prepLevel) - prepRank(b.prepLevel) || a.sponsor.localeCompare(b.sponsor));
 
 export const editions: Edition[] = editionsJson as Edition[];
+
+export const hasPdf = (p: Problem) => Boolean(p.pdfLocal || p.pdfUrl);
+/** Where the viewer loads the PDF from: our own copy first, source archive as fallback. */
+export const pdfSrc = (p: Problem) => p.pdfLocal?.path ?? p.pdfUrl;
+export const formatBytes = (b: number | null | undefined) => (b ? `${(b / 1048576).toFixed(1)} MB` : null);
 
 export const getProblem = (slug: string) => problems.find((p) => p.slug === slug);
 export const getEdition = (year: number) => editions.find((e) => e.year === year);

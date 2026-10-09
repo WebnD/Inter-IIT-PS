@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { editions, problems, recurringSponsors, domainCounts, displayName, yearRange } from "@/lib/data";
+import { editions, problems, recurringSponsors, domainCounts, displayName, yearRange, hasPdf } from "@/lib/data";
 import { PREP_LEVELS, PREP_META, DOMAINS } from "@/lib/taxonomy";
 
 export default function HomePage() {
   const { min, max } = yearRange();
-  const withPdf = problems.filter((p) => p.pdfUrl).length;
+  const withPdf = problems.filter(hasPdf).length;
   const recurring = recurringSponsors();
   const years = Array.from({ length: max - min + 1 }, (_, i) => min + i);
   const counts = domainCounts();
