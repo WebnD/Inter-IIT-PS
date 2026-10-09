@@ -1,0 +1,106 @@
+# Inter-IIT PS Archive
+
+Internal prep portal for the contingent: every Inter-IIT Tech Meet problem statement from 2020 to 2025, filterable by year, prep level, domain and sponsor.
+
+Next.js 14 (App Router) + TypeScript + Tailwind. Fully static: every page is pre-rendered at build time from JSON in `data/`. No database.
+
+## Run it
+
+```bash
+npm install
+cp .env.example .env.local     # set PORTAL_PASSWORD, or leave it empty to skip the login locally
+npm run dev                    # http://localhost:3000
+```
+
+Node 18.17 or newer. Fonts (Archivo, Public Sans) are downloaded from Google Fonts at build time by `next/font` and then self-hosted, so the first build needs internet.
+
+## Access control
+
+`middleware.ts` puts the whole site behind one shared password (`PORTAL_PASSWORD`).
+
+- Empty or unset: no login, the site is open. Use this only locally.
+- Set: everyone signs in once at `/login`; a session cookie lasts 30 days.
+- To kick everyone out, change the password and redeploy. Old cookies stop matching.
+
+Every page also sends `X-Robots-Tag: noindex`, so search engines won't list it.
+
+This is a shared-secret gate, which suits a contingent portal. If you later need per-person accounts or progress tracking, move to Supabase Auth.
+
+## Data
+
+```
+data/
+  problems.json     generated, do not edit by hand
+  editions.json     generated, do not edit by hand
+  enrichment.json   yours: notes, resources, missing summaries/PDFs
+scripts/
+  sync-data.mjs     fetches and parses the source README
+  taxonomy.mjs      domain rules, sponsor name aliases, tracks
+```
+
+### Re-sync from the source repo
+
+```bash
+npm run sync
+```
+
+This pulls the README from [criticic/InterIIT-TechMeet-Problem-Statements](https://github.com/criticic/InterIIT-TechMeet-Problem-Statements), then:
+
+- normalizes prep levels (`NONE`/`NO PREP` become `NO_PREP`; SAC and Engineers' Conclave are always `NON_COMPETITIVE`),
+- merges sponsor spellings (`DRONA AVIATION` and `Drona Aviation` become one sponsor),
+- maps the free-text domain tags into 18 domain buckets,
+- builds stable slugs like `2024-mid-adobe` or `2025-mid-isro-geonli`,
+- prints any raw tags that didn't map to a bucket, so you can extend `scripts/taxonomy.mjs`.
+
+When Tech Meet 15.0 lands in the source repo, run `npm run sync` and redeploy. If the source README changes format and nothing parses, the script stops with an error instead of writing an empty file.
+
+### Add your own notes and resources
+
+Edit `data/enrichment.json`, keyed by slug. The slug is the last part of a PS page URL. These fields survive every re-sync.
+
+```json
+{
+  "2024-high-pathway": {
+    "notes": "Our 2024 team placed 5th. Judges pushed hard on latency numbers.",
+    "resources": [
+      { "type": "solution", "title": "IIT-X 2024 Pathway submission", "url": "https://github.com/..." },
+      { "type": "tutorial", "title": "Pathway RAG quickstart", "url": "https://pathway.com/developers/" }
+    ]
+  },
+  "2022-low-cognitive-garage": {
+    "summary": "Fill in the summary missing from the source archive.",
+    "pdfUrl": "https://..."
+  }
+}
+```
+
+`type` is one of `dataset`, `paper`, `tutorial`, `repo`, `solution`, `other`. A `summary` or `pdfUrl` here overrides the source.
+
+### About the PDFs
+
+The PDFs are sponsor documents, and the source repo has no license file. The portal links to them on the source repo's GitHub Pages instead of copying them. If you want them hosted here too, ask the repo maintainer first.
+
+## Pages
+
+| Route | What it shows |
+| --- | --- |
+| `/` | Edition × prep-level grid of every PS, recurring sponsors timeline, domain index |
+| `/explore` | All problems with filters (search, year, prep, domain, sponsor, PDF only). Filters live in the URL, so views can be shared |
+| `/ps/[slug]` | Full summary, PDF link, domains, original tags, notes, resources, same sponsor in other years, similar problems |
+| `/years/[year]` | One edition, grouped by prep level |
+| `/domains/[slug]` | One domain, with a count per year |
+| `/sponsors/[slug]` | One sponsor's full history, oldest first |
+| `/login` | Shared-password sign-in |
+
+## Deploy (Vercel)
+
+1. Push to GitHub and import the repo in Vercel.
+2. In Project Settings, then Environment Variables, add `PORTAL_PASSWORD`.
+3. Deploy. To change the password later, update the variable and redeploy.
+
+## Not in v1
+
+These are deliberately left for later phases:
+
+- Phase 3, enrichment: curated past-solution repos, datasets and prerequisite roadmaps per domain. The `enrichment.json` format above already supports this.
+- Phase 4, practice layer: bookmarks, per-member progress, assignments to sub-teams. Needs Supabase.

@@ -1,0 +1,38 @@
+[
+  {
+    "year": 2025,
+    "number": "14.0",
+    "host": "IIT Patna",
+    "theme": "Resonating Cascades"
+  },
+  {
+    "year": 2024,
+    "number": "13.0",
+    "host": "IIT Bombay",
+    "theme": "The Timeless Technopolis"
+  },
+  {
+    "year": 2023,
+    "number": "12.0",
+    "host": "IIT Madras",
+    "theme": "Shores of Discovery"
+  },
+  {
+    "year": 2022,
+    "number": "11.0",
+    "host": "IIT Kanpur",
+    "theme": "A Respawned Reality"
+  },
+  {
+    "year": 2021,
+    "number": "10.0",
+    "host": "IIT Kharagpur",
+    "theme": "To Newer Horizons: In the Wake of the Pandemic"
+  },
+  {
+    "year": 2020,
+    "number": "9.0",
+    "host": "IIT Guwahati",
+    "theme": "Pandemic, Paranoia, and Possibilities"
+  }
+]
